@@ -10,10 +10,16 @@ app.use(cors());
 app.use(express.json());
 
 // Importar rutas
+const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const productsRoutes = require('./routes/productsRoutes');
 
 // Usar rutas
-app.use('/api', profileRoutes);
+app.use('/api', authRoutes); // Rutas de autenticación (públicas)
+app.use('/api', productsRoutes); // Rutas de productos (públicas)
+app.use('/api', profileRoutes); // Rutas de perfil (protegidas)
+app.use('/api', adminRoutes); // Rutas de admin (protegidas)
 
 app.get('/', (req, res) => {
   res.json({ 
@@ -22,7 +28,22 @@ app.get('/', (req, res) => {
     endpoints: {
       profile: '/api/profile/:id',
       addresses: '/api/profile/:id/addresses',
-      paymentMethods: '/api/profile/:id/payment-methods'
+      paymentMethods: '/api/profile/:id/payment-methods',
+      auth: {
+        register: '/api/auth/register',
+        login: '/api/auth/login',
+        verify: '/api/auth/verify',
+        changePassword: '/api/auth/change-password'
+      },
+      products: '/api/products',
+      productsFeatured: '/api/products/featured',
+      categories: '/api/products/categories',
+      admin: {
+        dashboard: '/api/admin/dashboard/stats',
+        products: '/api/admin/products',
+        orders: '/api/admin/orders',
+        users: '/api/admin/users'
+      }
     }
   });
 });

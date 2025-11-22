@@ -1,47 +1,5 @@
 const User = require('../models/User');
-
-// Simulación de base de datos en memoria
-let users = [
-  {
-    id: 1,
-    email: 'usuario@ejemplo.com',
-    firstName: 'Juan',
-    lastName: 'Pérez',
-    phone: '+1234567890',
-    avatar: 'https://via.placeholder.com/150',
-    dateOfBirth: '1990-01-15',
-    gender: 'male',
-    addresses: [
-      {
-        id: 1,
-        type: 'home',
-        street: 'Calle Principal 123',
-        city: 'Ciudad',
-        state: 'Estado',
-        zipCode: '12345',
-        country: 'País',
-        isPrimary: true
-      }
-    ],
-    paymentMethods: [
-      {
-        id: 1,
-        type: 'credit_card',
-        cardNumber: '**** **** **** 1234',
-        cardHolder: 'Juan Pérez',
-        expiryDate: '12/25',
-        isPrimary: true
-      }
-    ],
-    preferences: {
-      notifications: true,
-      newsletter: false,
-      language: 'es'
-    },
-    createdAt: new Date('2023-01-01'),
-    updatedAt: new Date()
-  }
-];
+const { users } = require('../data/database');
 
 const profileController = {
   // Obtener perfil del usuario
