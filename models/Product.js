@@ -1,26 +1,62 @@
 // Modelo de Producto
-class Product {
-  constructor(data) {
-    this.id = data.id;
-    this.name = data.name;
-    this.description = data.description;
-    this.price = data.price;
-    this.category = data.category;
-    this.stock = data.stock;
-    this.images = data.images || [];
-    this.featured = data.featured || false;
-    this.active = data.active !== undefined ? data.active : true;
-    this.createdAt = data.createdAt;
-    this.updatedAt = data.updatedAt;
-  }
+// Este modelo define la estructura de la tabla 'products' en la base de datos.
+// Almacena información detallada sobre los productos disponibles en la tienda.
 
-  isInStock() {
-    return this.stock > 0;
-  }
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
 
-  getDiscountedPrice(discount) {
-    return this.price - (this.price * discount / 100);
-  }
-}
+const Product = sequelize.define('Product', {
+    id_product: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true
+    },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+    },
+    price: {
+        type: DataTypes.DECIMAL,
+        allowNull: false,
+    },
+    old_price: {
+        type: DataTypes.DECIMAL,
+        allowNull: true,
+    },
+    category_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    stock: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    images: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+    },
+    is_featured: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
+    active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+    },
+    created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+    }
+}, {
+    tableName: 'products',
+    timestamps: false
+});
 
 module.exports = Product;

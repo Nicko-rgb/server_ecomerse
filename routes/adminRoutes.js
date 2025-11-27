@@ -28,4 +28,11 @@ router.get('/admin/users', adminController.getAllUsers);
 router.get('/admin/users/:id', adminController.getUser);
 router.put('/admin/users/:id', adminController.updateUser);
 
+// ============ PROMOCIONES ============
+router.get('/admin/promotions', adminController.getAllPromotions);
+router.get('/admin/promotions/:id', adminController.getPromotion);
+router.post('/admin/promotions', adminController.createPromotion);
+router.put('/admin/promotions/:id', adminController.updatePromotion);
+router.delete('/admin/promotions/:id', adminController.deletePromotion);
+
 module.exports = router;
