@@ -14,6 +14,9 @@ const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const productsRoutes = require('./routes/productsRoutes');
+const { sequelize, initAssociations, syncModels } = require('./models');
+const { seedInitialData } = require('./config/seed');
+const chalk = require('chalk');
 
 // Usar rutas
 app.use('/api', authRoutes); // Rutas de autenticación (públicas)
@@ -22,34 +25,45 @@ app.use('/api', profileRoutes); // Rutas de perfil (protegidas)
 app.use('/api', adminRoutes); // Rutas de admin (protegidas)
 
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Ecommerce API Server',
-    version: '1.0.0',
-    endpoints: {
-      profile: '/api/profile/:id',
-      addresses: '/api/profile/:id/addresses',
-      paymentMethods: '/api/profile/:id/payment-methods',
-      auth: {
-        register: '/api/auth/register',
-        login: '/api/auth/login',
-        verify: '/api/auth/verify',
-        changePassword: '/api/auth/change-password'
-      },
-      products: '/api/products',
-      productsFeatured: '/api/products/featured',
-      categories: '/api/products/categories',
-      admin: {
-        dashboard: '/api/admin/dashboard/stats',
-        products: '/api/admin/products',
-        orders: '/api/admin/orders',
-        users: '/api/admin/users'
-      }
-    }
-  });
+    res.send('Ecommerce API Server');
 });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
-  console.log(`Local: http://localhost:${port}`);
-  console.log(`Network: http://10.106.183.4:${port}`);
+// Ruta 404 para endpoints no encontrados
+// app.use('*', (req, res) => {
+//     res.status(404).json({
+//         error: 'Endpoint no encontrado',
+//         path: req.originalUrl,
+//         method: req.method
+//     });
+// });
+
+const start = async () => {
+    try {
+        await sequelize.authenticate();
+        console.log(chalk.bgBlue('✅ CONEXION A BASE DE DATOS EXITOSA'));
+        initAssociations();
+        await syncModels();
+        console.log(chalk.bgGreen('✅ MODELO DE BASE DE DATOS SINCRONIZADOS'));
+        if (process.env.SEED_INITIAL_DATA === 'true') {
+            await seedInitialData();
+            console.log(chalk.bgGreen('✅ DATOS INICIALES SEMBRADOS'));
+        }
+        app.listen(port, '0.0.0.0', () => {
+            console.log(chalk.green(`✅ Servidor en funcionamiento: http://localhost:${port}`));
+            console.log(chalk.green(`🌐 Status: http://localhost:${port}/health`));
+        });
+    } catch (err) {
+        console.error(chalk.bgRed('❌ Error al iniciar el servidor'), err);
+        process.exit(1);
+    }
+};
+
+start();
+app.get('/health', async (req, res) => {
+    try {
+        await sequelize.authenticate();
+        res.json({ status: 'ok', db: 'up', time: new Date().toISOString(), uptime: process.uptime() });
+    } catch (e) {
+        res.status(500).json({ status: 'error', db: 'down', error: e.message });
+    }
 });
