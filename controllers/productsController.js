@@ -108,9 +108,10 @@ const productsController = {
         }
     },
 
-    getFeaturedProducts: async (_req, res) => {
+    getFeaturedProducts: async (req, res) => {
         try {
-            const products = await Product.findAll({ where: { active: true, is_featured: true }, limit: 10 });
+            const limit = Math.max(parseInt(req.query.limit) || 10, 1);
+            const products = await Product.findAll({ where: { active: true, is_featured: true }, order: sequelize.Sequelize.literal('RANDOM()'), limit });
             const categories = await Categories.findAll();
             const catMap = new Map(categories.map(c => [c.id_category, c.name]));
             res.json({ success: true, data: products.map(p => mapProduct(p, catMap.get(p.category_id))) });
