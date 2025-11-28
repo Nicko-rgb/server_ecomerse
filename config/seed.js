@@ -351,10 +351,13 @@ async function seedInitialData() {
         if (pmCount === 0) {
             console.log(chalk.blue('Seeding payment methods catalog...'));
             await PaymentMethod.bulkCreate([
-                { code: 'card', name: 'Tarjeta' },
-                { code: 'paypal', name: 'PayPal' },
-                { code: 'yape', name: 'Yape' },
-                { code: 'plin', name: 'Plin' }
+                { code: 'credit_card', name: 'Tarjeta de Crédito', is_active: true },
+                { code: 'debit_card', name: 'Tarjeta de Débito', is_active: true },
+                { code: 'paypal', name: 'PayPal', is_active: true },
+                { code: 'yape', name: 'Yape', is_active: true },
+                { code: 'plin', name: 'Plin', is_active: true },
+                { code: 'bank_transfer', name: 'Transferencia Bancaria', is_active: true },
+                { code: 'cash', name: 'Efectivo', is_active: false }
             ]);
             console.log(chalk.green('Seed completed: payment methods catalog inserted'));
         } else {

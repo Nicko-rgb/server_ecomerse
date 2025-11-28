@@ -33,6 +33,16 @@ const DataUser = sequelize.define('DataUser', {
     preferred_payment_method_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
+    },
+    addresses: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: []
+    },
+    payment_methods: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: []
     }
 }, {
     tableName: 'data_users',

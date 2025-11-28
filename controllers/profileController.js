@@ -9,9 +9,14 @@ const profileController = {
             const userId = parseInt(req.params.id);
             const user = await User.findByPk(userId);
             if (!user) {
-                return res.status(404).json({ error: 'Usuario no encontrado' });
+                return res.status(404).json({ 
+                    success: false, 
+                    error: 'Usuario no encontrado' 
+                });
             }
+            
             const du = await DataUser.findOne({ where: { user_id: userId } });
+            
             const data = {
                 id: user.id_user,
                 email: user.email,
@@ -21,15 +26,30 @@ const profileController = {
                 avatar: null,
                 dateOfBirth: user.date_of_birth,
                 gender: user.gender,
-                addresses: du ? du.addresses : [],
+                // Direcciones como array de objetos
+                addresses: du ? [
+                    {
+                        id: 1,
+                        type: 'home',
+                        fullAddress: `${du.address}, ${du.city}, ${du.country}`,
+                        reference: 'Dirección principal',
+                        isPrimary: true,
+                        createdAt: user.registered_at
+                    }
+                ] : [],
                 paymentMethods: [],
                 preferences: {},
                 createdAt: user.registered_at,
                 updatedAt: user.registered_at
             };
+            
             res.json({ success: true, data });
         } catch (error) {
-            res.status(500).json({ error: 'Error interno del servidor' });
+            console.error('Error getting profile:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: 'Error interno del servidor' 
+            });
         }
     },
 
@@ -63,9 +83,25 @@ const profileController = {
         try {
             const userId = parseInt(req.params.id);
             const du = await DataUser.findOne({ where: { user_id: userId } });
-            res.json({ success: true, data: du ? du.addresses : [] });
+            
+            const addresses = du ? [
+                {
+                    id: 1,
+                    type: 'home',
+                    fullAddress: `${du.address}, ${du.city}, ${du.country} ${du.postal_code}`,
+                    reference: 'Dirección principal registrada',
+                    isPrimary: true,
+                    createdAt: new Date()
+                }
+            ] : [];
+            
+            res.json({ success: true, data: addresses });
         } catch (error) {
-            res.status(500).json({ error: 'Error interno del servidor' });
+            console.error('Error getting addresses:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: 'Error interno del servidor' 
+            });
         }
     },
 
@@ -97,12 +133,75 @@ const profileController = {
         try {
             const userId = parseInt(req.params.id);
             const du = await DataUser.findOne({ where: { user_id: userId } });
-            const preferredId = du ? du.preferred_payment_method_id : null;
-            const catalog = await PaymentMethod.findAll({ where: { is_active: true } });
-            const data = catalog.map(pm => ({ id: pm.id_payment_method, code: pm.code, name: pm.name, isPrimary: pm.id_payment_method === preferredId }));
-            res.json({ success: true, data });
+            
+            const paymentMethods = du && du.payment_methods ? du.payment_methods : [];
+            
+            res.json({ success: true, data: paymentMethods });
         } catch (error) {
-            res.status(500).json({ error: 'Error interno del servidor' });
+            console.error('Error getting payment methods:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: 'Error interno del servidor' 
+            });
+        }
+    },
+
+    // Actualizar dirección
+    updateAddress: async (req, res) => {
+        try {
+            const userId = parseInt(req.params.id);
+            const addressId = parseInt(req.params.addressId);
+            const updatedData = req.body;
+            
+            let du = await DataUser.findOne({ where: { user_id: userId } });
+            if (!du) {
+                return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+            }
+            
+            const list = Array.isArray(du.addresses) ? [...du.addresses] : [];
+            const addressIndex = list.findIndex(addr => addr.id === addressId);
+            
+            if (addressIndex === -1) {
+                return res.status(404).json({ success: false, error: 'Dirección no encontrada' });
+            }
+            
+            // Si se marca como principal, desmarcar las demás
+            if (updatedData.isPrimary) {
+                for (const addr of list) addr.isPrimary = false;
+            }
+            
+            // Actualizar la dirección
+            list[addressIndex] = { ...list[addressIndex], ...updatedData };
+            
+            await DataUser.update({ addresses: list }, { where: { user_id: userId } });
+            res.json({ success: true, message: 'Dirección actualizada correctamente', data: list[addressIndex] });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Error interno del servidor' });
+        }
+    },
+
+    // Eliminar dirección
+    deleteAddress: async (req, res) => {
+        try {
+            const userId = parseInt(req.params.id);
+            const addressId = parseInt(req.params.addressId);
+            
+            let du = await DataUser.findOne({ where: { user_id: userId } });
+            if (!du) {
+                return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+            }
+            
+            const list = Array.isArray(du.addresses) ? [...du.addresses] : [];
+            const filteredList = list.filter(addr => addr.id !== addressId);
+            
+            if (filteredList.length === list.length) {
+                return res.status(404).json({ success: false, error: 'Dirección no encontrada' });
+            }
+            
+            await DataUser.update({ addresses: filteredList }, { where: { user_id: userId } });
+            res.json({ success: true, message: 'Dirección eliminada correctamente' });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Error interno del servidor' });
         }
     },
 
@@ -110,15 +209,109 @@ const profileController = {
     addPaymentMethod: async (req, res) => {
         try {
             const userId = parseInt(req.params.id);
-            const { paymentMethodId } = req.body;
+            const newPaymentMethod = req.body;
+            
             let du = await DataUser.findOne({ where: { user_id: userId } });
-            if (!du) du = await DataUser.create({ user_id: userId, addresses: [] });
-            await DataUser.update({ preferred_payment_method_id: paymentMethodId }, { where: { user_id: userId } });
-            const catalog = await PaymentMethod.findAll({ where: { is_active: true } });
-            const data = catalog.map(pm => ({ id: pm.id_payment_method, code: pm.code, name: pm.name, isPrimary: pm.id_payment_method === paymentMethodId }));
-            res.json({ success: true, message: 'Preferencia de método de pago actualizada', data });
+            if (!du) {
+                du = await DataUser.create({ 
+                    user_id: userId, 
+                    addresses: [], 
+                    payment_methods: [] 
+                });
+            }
+            
+            const paymentMethods = Array.isArray(du.payment_methods) ? [...du.payment_methods] : [];
+            const nextId = paymentMethods.length ? Math.max(...paymentMethods.map(pm => pm.id || 0)) + 1 : 1;
+            
+            const paymentMethod = { 
+                id: nextId, 
+                ...newPaymentMethod,
+                createdAt: new Date()
+            };
+            
+            // Si es método principal, desmarcar los demás
+            if (paymentMethod.isPrimary) {
+                for (const pm of paymentMethods) pm.isPrimary = false;
+            }
+            
+            paymentMethods.push(paymentMethod);
+            
+            await DataUser.update({ payment_methods: paymentMethods }, { where: { user_id: userId } });
+            
+            res.json({ 
+                success: true, 
+                message: 'Método de pago agregado correctamente', 
+                data: paymentMethod 
+            });
         } catch (error) {
-            res.status(500).json({ error: 'Error interno del servidor' });
+            console.error('Error adding payment method:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: 'Error interno del servidor' 
+            });
+        }
+    },
+
+    // Actualizar método de pago
+    updatePaymentMethod: async (req, res) => {
+        try {
+            const userId = parseInt(req.params.id);
+            const paymentMethodId = parseInt(req.params.paymentMethodId);
+            const updatedData = req.body;
+            
+            let du = await DataUser.findOne({ where: { user_id: userId } });
+            if (!du) {
+                return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+            }
+            
+            const paymentMethods = Array.isArray(du.payment_methods) ? [...du.payment_methods] : [];
+            const methodIndex = paymentMethods.findIndex(pm => pm.id === paymentMethodId);
+            
+            if (methodIndex === -1) {
+                return res.status(404).json({ success: false, error: 'Método de pago no encontrado' });
+            }
+            
+            // Si se marca como principal, desmarcar los demás
+            if (updatedData.isPrimary) {
+                for (const pm of paymentMethods) pm.isPrimary = false;
+            }
+            
+            // Actualizar el método de pago
+            paymentMethods[methodIndex] = { ...paymentMethods[methodIndex], ...updatedData };
+            
+            await DataUser.update({ payment_methods: paymentMethods }, { where: { user_id: userId } });
+            res.json({ 
+                success: true, 
+                message: 'Método de pago actualizado correctamente', 
+                data: paymentMethods[methodIndex] 
+            });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Error interno del servidor' });
+        }
+    },
+
+    // Eliminar método de pago
+    deletePaymentMethod: async (req, res) => {
+        try {
+            const userId = parseInt(req.params.id);
+            const paymentMethodId = parseInt(req.params.paymentMethodId);
+            
+            let du = await DataUser.findOne({ where: { user_id: userId } });
+            if (!du) {
+                return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+            }
+            
+            const paymentMethods = Array.isArray(du.payment_methods) ? [...du.payment_methods] : [];
+            const filteredMethods = paymentMethods.filter(pm => pm.id !== paymentMethodId);
+            
+            if (filteredMethods.length === paymentMethods.length) {
+                return res.status(404).json({ success: false, error: 'Método de pago no encontrado' });
+            }
+            
+            await DataUser.update({ payment_methods: filteredMethods }, { where: { user_id: userId } });
+            res.json({ success: true, message: 'Método de pago eliminado correctamente' });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Error interno del servidor' });
         }
     }
 };

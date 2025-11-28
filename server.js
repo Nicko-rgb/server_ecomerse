@@ -9,20 +9,10 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Importar rutas
-const authRoutes = require('./routes/authRoutes');
-const profileRoutes = require('./routes/profileRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const productsRoutes = require('./routes/productsRoutes');
+// Importar configuración de base de datos
 const { sequelize, initAssociations, syncModels } = require('./models');
 const { seedInitialData } = require('./config/seed');
 const chalk = require('chalk');
-
-// Usar rutas
-app.use('/api', authRoutes); // Rutas de autenticación (públicas)
-app.use('/api', productsRoutes); // Rutas de productos (públicas)
-app.use('/api', profileRoutes); // Rutas de perfil (protegidas)
-app.use('/api', adminRoutes); // Rutas de admin (protegidas)
 
 app.get('/', (req, res) => {
     res.send('Ecommerce API Server');
@@ -44,9 +34,30 @@ const start = async () => {
         initAssociations();
         await syncModels();
         console.log(chalk.bgGreen('✅ MODELO DE BASE DE DATOS SINCRONIZADOS'));
+        
+        // Importar y configurar rutas después de inicializar la DB
+        const authRoutes = require('./routes/authRoutes');
+        const profileRoutes = require('./routes/profileRoutes');
+        const adminRoutes = require('./routes/adminRoutes');
+        const productsRoutes = require('./routes/productsRoutes');
+        
+        // Usar rutas
+        app.use('/api', authRoutes); // Rutas de autenticación (públicas)
+        app.use('/api', productsRoutes); // Rutas de productos (públicas)
+        app.use('/api', profileRoutes); // Rutas de perfil (protegidas)
+        app.use('/api/orders', require('./routes/ordersRoutes')); // Rutas de pedidos (protegidas)
+        app.use('/api', adminRoutes); // Rutas de admin (protegidas)
+        console.log(chalk.bgGreen('✅ RUTAS CONFIGURADAS'));
         if (process.env.SEED_INITIAL_DATA === 'true') {
             await seedInitialData();
             console.log(chalk.bgGreen('✅ DATOS INICIALES SEMBRADOS'));
+            
+            // Ejecutar seeder de datos de perfil si está habilitado
+            if (process.env.SEED_PROFILE_DATA === 'true') {
+                const { seedProfileData } = require('./scripts/seedProfileDataPostgres');
+                await seedProfileData();
+                console.log(chalk.bgGreen('✅ DATOS DE PERFIL SEMBRADOS'));
+            }
         }
         app.listen(port, '0.0.0.0', () => {
             console.log(chalk.green(`✅ Servidor en funcionamiento: http://localhost:${port}`));

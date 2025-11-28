@@ -24,7 +24,7 @@ const initAssociations = () => {
     Product.belongsTo(Categories, { foreignKey: 'category_id' });
     User.hasMany(Order, { foreignKey: 'user_id' });
     Order.belongsTo(User, { foreignKey: 'user_id' });
-    Order.hasMany(OrderItem, { foreignKey: 'order_id' });
+    Order.hasMany(OrderItem, { foreignKey: 'order_id', as: 'items' });
     OrderItem.belongsTo(Order, { foreignKey: 'order_id' });
     Promotion.hasMany(PromotionProduct, { foreignKey: 'promotion_id' });
     PromotionProduct.belongsTo(Promotion, { foreignKey: 'promotion_id' });
