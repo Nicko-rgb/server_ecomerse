@@ -14,6 +14,7 @@ const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const productsRoutes = require('./routes/productsRoutes');
+const ordersRoutes = require('./routes/ordersRoutes');
 const { sequelize, initAssociations, syncModels } = require('./models');
 const { seedInitialData } = require('./config/seed');
 const chalk = require('chalk');
@@ -23,19 +24,11 @@ app.use('/api', authRoutes); // Rutas de autenticación (públicas)
 app.use('/api', productsRoutes); // Rutas de productos (públicas)
 app.use('/api', profileRoutes); // Rutas de perfil (protegidas)
 app.use('/api', adminRoutes); // Rutas de admin (protegidas)
+app.use('/api', ordersRoutes); // Rutas de pedidos (protegidas)
 
 app.get('/', (req, res) => {
     res.send('Ecommerce API Server');
 });
-
-// Ruta 404 para endpoints no encontrados
-// app.use('*', (req, res) => {
-//     res.status(404).json({
-//         error: 'Endpoint no encontrado',
-//         path: req.originalUrl,
-//         method: req.method
-//     });
-// });
 
 const start = async () => {
     try {

@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'tu_secreto_super_seguro_cambiar_en
 
 const authController = {
     register: async (req, res) => {
+        
         try {
             const { email, password, firstName, lastName, phone } = req.body;
             if (!email || !password || !firstName || !lastName) {
@@ -151,6 +152,93 @@ const authController = {
             res.json({ success: true, message: 'Contraseña actualizada correctamente' });
         } catch (error) {
             res.status(500).json({ success: false, error: 'Error al cambiar contraseña' });
+        }
+    }
+    ,
+    googleLogin: async (req, res) => {
+        try {
+            const { idToken } = req.body;
+            if (!idToken) {
+                return res.status(400).json({ success: false, error: 'Falta idToken de Google' });
+            }
+
+            const verifyUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
+            const resp = await fetch(verifyUrl);
+            if (!resp.ok) {
+                return res.status(401).json({ success: false, error: 'Token de Google inválido' });
+            }
+            const info = await resp.json();
+            const email = info.email;
+            const sub = info.sub; // Google user id
+            const given_name = info.given_name || '';
+            const family_name = info.family_name || '';
+            if (!email || !sub) {
+                return res.status(400).json({ success: false, error: 'Respuesta de Google incompleta' });
+            }
+
+            let user = await User.findOne({ where: { email } });
+            if (!user) {
+                const randomPass = await bcrypt.hash(`google_${sub}_${Date.now()}`, 10);
+                user = await User.create({
+                    email,
+                    password: randomPass,
+                    first_name: given_name,
+                    last_name: family_name,
+                    role: 'customer',
+                    active: true,
+                    provider: 'google',
+                    provider_id: sub
+                });
+                const DataUser = require('../models/DataUser');
+                await DataUser.create({ user_id: user.id_user, addresses: [] });
+            } else {
+                if (!user.provider || !user.provider_id) {
+                    await User.update({ provider: 'google', provider_id: sub }, { where: { id_user: user.id_user } });
+                }
+            }
+
+            const token = jwt.sign({ id: user.id_user, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+            const userWithoutPassword = {
+                id: user.id_user,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                phone: user.phone,
+                avatar: null,
+                dateOfBirth: user.date_of_birth,
+                gender: user.gender,
+                role: user.role,
+                active: user.active,
+                addresses: [],
+                paymentMethods: [],
+                preferences: {},
+                createdAt: user.registered_at,
+                updatedAt: user.registered_at
+            };
+            res.json({ success: true, message: 'Autenticación Google exitosa', data: { user: userWithoutPassword, token } });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Error en autenticación con Google' });
+        }
+    }
+    ,
+    checkEmail: async (req, res) => {
+        console.log('Verificando email...');
+        try {
+            const { email } = req.body || {};
+            if (!email) {
+                return res.status(400).json({ success: false, error: 'Email es requerido' });
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ success: false, error: 'Email inválido' });
+            }
+            const normalized = String(email).trim().toLowerCase();
+            console.log('Email recibido:', normalized);
+            const user = await User.findOne({ where: { email: normalized }, attributes: ['id_user'] });
+            res.json({ success: true, data: { exists: !!user } });
+        } catch (error) {
+            console.error('Error checkEmail:', error && error.message ? error.message : error);
+            res.status(500).json({ success: false, error: 'Error al verificar email' });
         }
     }
 };

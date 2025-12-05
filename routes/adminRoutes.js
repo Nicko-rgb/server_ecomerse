@@ -3,9 +3,9 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
-// Aplicar autenticación y verificación de admin a todas las rutas
-router.use(authenticateToken);
-router.use(requireAdmin);
+// Aplicar autenticación y verificación de admin solo bajo prefijo /admin
+router.use('/admin', authenticateToken);
+router.use('/admin', requireAdmin);
 
 // ============ DASHBOARD ============
 router.get('/admin/dashboard/stats', adminController.getDashboardStats);
