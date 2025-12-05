@@ -21,6 +21,12 @@ const profileController = {
                 avatar: null,
                 dateOfBirth: user.date_of_birth,
                 gender: user.gender,
+                // Datos principales de envío desde DataUser
+                address: du ? du.address : null,
+                city: du ? du.city : null,
+                postalCode: du ? du.postal_code : null,
+                country: du ? du.country : null,
+                // Listas auxiliares
                 addresses: du ? du.addresses : [],
                 paymentMethods: [],
                 preferences: {},

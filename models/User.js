@@ -51,6 +51,14 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    provider: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    provider_id: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
     registered_at: {
         type: DataTypes.DATE,
         allowNull: false,

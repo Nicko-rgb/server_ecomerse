@@ -21,7 +21,7 @@ async function seedInitialData() {
         }
         console.log(chalk.blue('Seeding initial data...'));
 
-        const names = ['Electrónica', 'Ropa', 'Calzado', 'Accesorios'];
+        const names = ['Electrónica', 'Ropa', 'Calzado', 'Accesorios', 'Hogar', 'Belleza'];
         const catRows = await Categories.bulkCreate(names.map(name => ({ name })), { returning: true });
         const catMap = new Map(catRows.map(c => [c.name, c.id_category]));
 
@@ -302,6 +302,67 @@ async function seedInitialData() {
                 ],
                 active: true
             },
+            {
+                name: 'Set de Sábanas Premium 2 Plazas',
+                description: 'Juego de sábanas de microfibra suave y transpirable, con acabado antipeeling y alta durabilidad. Incluye sábana bajera elástica, sábana encimera y dos fundas de almohada. Ideal para uso diario y fácil de lavar.',
+                price: 39.99,
+                old_price: 49.99,
+                category_id: catMap.get('Hogar'),
+                stock: 70,
+                images: [
+                    'https://http2.mlstatic.com/D_NQ_NP_797237-MLA72203832407_102023-O.webp',
+                    'https://www.rosen.cl/media/catalog/product/1/3/13021044-1.jpg',
+                    'https://m.media-amazon.com/images/I/61eiEZIjm8L._AC_SL1500_.jpg',
+                    'https://http2.mlstatic.com/D_NQ_NP_973395-MLA84555360283_052025-O.webp'
+                ],
+                active: true
+            },
+            {
+                name: 'Lámpara de Mesa LED Regulable',
+                description: 'Lámpara compacta con iluminación LED regulable en 3 niveles, bajo consumo y brazo flexible para orientar la luz. Perfecta para escritorio, lectura o mesita de noche. Puerto USB para carga de dispositivos.',
+                price: 24.99,
+                old_price: 34.99,
+                category_id: catMap.get('Hogar'),
+                stock: 90,
+                images: [
+                    'https://oechsle.vteximg.com.br/arquivos/ids/15410290/image-d7c9b5a5b7ea4b7392c5d16e1ecf2994.jpg?v=638284140831000000',
+                    'https://m.media-amazon.com/images/I/61sR-y062VL._AC_UF894,1000_QL80_.jpg',
+                    'https://http2.mlstatic.com/D_NQ_NP_855068-MLA82914580751_032025-O.webp',
+                    'https://todatecnologia.pe/wp-content/uploads/2023/09/6-3.jpg'
+                ],
+                active: true
+            },
+            {
+                name: 'Crema Hidratante Facial 50ml',
+                description: 'Crema facial ligera con ácido hialurónico y vitamina E para hidratación profunda. Textura no grasa, apta para uso diario y todo tipo de piel. Ayuda a suavizar líneas finas y mantener la barrera cutánea.',
+                price: 14.99,
+                old_price: 19.99,
+                category_id: catMap.get('Belleza'),
+                stock: 120,
+                images: [
+                    'https://wongfood.vtexassets.com/arquivos/ids/579281/Crema-Facial-Gel-Nivea-Rose-Care-Hidratante-50ml-3-219990239.jpg?v=637992280941800000',
+                    'https://www.farmacialeloir.com.ar/img/articulos/2024/01/nivea_rose_care_crema_hidratante_en_gel_2_imagen3.jpg',
+                    'https://img.nivea.com/-/media/miscellaneous/media-center-items/d/0/5/ec6c2199685244549a527067ea84acca-web_1010x1180_transparent_png.png?rx=0&ry=309&rw=1010&rh=560&hash=E1CC589D801C45C4D5DB75D4783AE3D4',
+                    'https://santaisabel.vtexassets.com/arquivos/ids/525629/Crema-Facial-Hidratante-Nivea-Intensiva-50-ml.jpg?v=638902583221030000'
+                ],
+                active: true,
+                is_featured: true
+            },
+            {
+                name: 'Perfume Floral 100ml',
+                description: 'Fragancia floral con notas de jazmín y vainilla, diseñada para uso diario con fijación media. Presentación de 100ml con atomizador fino y botella de vidrio. Ideal para regalo.',
+                price: 29.99,
+                old_price: 39.99,
+                category_id: catMap.get('Belleza'),
+                stock: 80,
+                images: [
+                    'https://importacionessumak.com/cdn/shop/files/ProductoFondoBlanco_1_d37e7112-e5da-46b2-ac19-cf4bbadbee66.jpg?v=1711054685',
+                    'https://importacionessumak.com/cdn/shop/files/Portada_eaf2cd42-b9c8-431c-a107-5b21d23b3b6d.jpg?v=1711054685&width=1500',
+                    'https://importacionessumak.com/cdn/shop/files/Mododeuso_e9855d73-4864-45a1-a275-359d6442fb21.jpg?v=1711054684&width=1500',
+                    'https://oechsle.vteximg.com.br/arquivos/ids/17701325-800-800/image-2be3d0a6bd024fd186f46726fc119140.jpg?v=638507433267530000'
+                ],
+                active: true
+            },
         ];
         const created = await Product.bulkCreate(items, { returning: true });
         console.log(chalk.green('Seed completed: products and categories inserted'));
@@ -326,6 +387,14 @@ async function seedInitialData() {
                 base.push({ name: 'Material', value: 'Poliéster' });
                 base.push({ name: 'Color', value: 'Azul' });
                 base.push({ name: 'Resistente al agua', value: 'Sí' });
+            } else if (catId === catMap.get('Hogar')) {
+                base.push({ name: 'Material', value: 'Microfibra' });
+                base.push({ name: 'Color', value: 'Gris' });
+                base.push({ name: 'Dimensiones', value: '2 plazas' });
+            } else if (catId === catMap.get('Belleza')) {
+                base.push({ name: 'Tipo de piel', value: 'Todo tipo' });
+                base.push({ name: 'Fragancia', value: 'Floral' });
+                base.push({ name: 'Contenido', value: '100 ml' });
             }
             if (base.length) {
                 await ProductFeature.bulkCreate(base.map(b => ({ product_id: p.id_product, name: b.name, value: b.value })));
@@ -354,7 +423,7 @@ async function seedInitialData() {
                 { code: 'card', name: 'Tarjeta' },
                 { code: 'paypal', name: 'PayPal' },
                 { code: 'yape', name: 'Yape' },
-                { code: 'plin', name: 'Plin' }
+                { code: 'efectivo', name: 'Efectivo' }
             ]);
             console.log(chalk.green('Seed completed: payment methods catalog inserted'));
         } else {

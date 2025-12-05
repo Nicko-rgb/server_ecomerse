@@ -27,6 +27,11 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    order_number: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
     tracking_number: {
         type: DataTypes.STRING,
         allowNull: true
@@ -82,4 +87,3 @@ const OrderItem = sequelize.define('OrderItem', {
 });
 
 module.exports = { Order, OrderItem };
-
